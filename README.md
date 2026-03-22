@@ -1,4 +1,4 @@
-# Reverse-Dictionary-ML
+# Reverse-Dictionary
 
 The Reverse Dictionary project aims to build a tool that accepts Arabic descriptions or meanings as input and returns the most relevant matching words. This project serves as a comprehensive way to refresh Machine Learning and Natural Language Processing (NLP) knowledge, moving from classical statistical methods to modern architectures. The Arabic domain was specifically chosen due to its linguistic richness and the unique challenges presented by its underdevelopment in the NLP space.
 
