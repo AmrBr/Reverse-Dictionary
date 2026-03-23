@@ -118,7 +118,7 @@ With the configuration above, the model achieved the following baseline results:
 
 ---
 
-## **Experiment 2: Static Embeddings (FastText + FAISS)**
+## **Experimentation: Static Embeddings (FastText + FAISS)**
 
 In this phase, we move beyond keyword matching to **Semantic Search**. By using pre-trained vectors, we aim to find the "mathematical meaning" of a definition, allowing the system to recognize synonyms even if the exact words don't overlap between the query and the training set.
 
