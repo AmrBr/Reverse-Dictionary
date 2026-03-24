@@ -66,7 +66,7 @@ Before proceeding with experimentation, a detailed analysis was conducted to ens
 
 ### **Overlap Analysis (Leakage)**
 To maintain the integrity of the evaluation, we verified that no identical word-gloss pairs exist across different splits:
-* **Word Overlap:** There are 4,060 words shared between Train and Validation, and 4,072 words shared between Train and Test. This is intentional to test if the model can identify the same word through different descriptive glosses.
+* **Word Overlap:** There are 4,060 words shared between Train and Validation, and 4,072 unique words shared between Train and Test and total of 6340 words shared. This is intentional to test if the model can identify the same word through different descriptive glosses.
 * **Full Pair Overlap:** Both Train ∩ Val and Train ∩ Test result in **0**.
 * **Critical Leakage:** 0.00% of Test pairs are present in the Training set.
 
@@ -75,7 +75,7 @@ To maintain the integrity of the evaluation, we verified that no identical word-
     * **Train:** 40,955 cases.
     * **Validation:** 2,332 cases.
     * **Test:** 2,329 cases.
-* **Word Length Frequency (Training Set):** An analysis of the character length of target words and their frequency in the training data:
+* **Word Length Frequency (Training Set):** An analysis of the word length of target words and their frequency in the training data:
     `{1: 56142, 2: 15476, 3: 3638, 4: 807, 5: 153, 6: 36, 7: 8, 8: 3, 9: 1, 13: 1}`
 
 ---
