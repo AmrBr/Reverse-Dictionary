@@ -122,7 +122,6 @@ With the configuration above, the model achieved the following baseline results:
 
 In this phase, we move beyond keyword matching to **Semantic Search**. By using pre-trained vectors, we aim to find the "mathematical meaning" of a definition, allowing the system to recognize synonyms even if the exact words don't overlap between the query and the training set.
 
----
 
 ### **Methodology**
 * **Model Selection:** We used the **FastText** Arabic model (`cc.ar.300.bin`), pre-trained on the Common Crawl dataset (2 million words/n-grams).
@@ -135,9 +134,6 @@ In this phase, we move beyond keyword matching to **Semantic Search**. By using 
       $$\text{similarity} = \cos(\theta) = \frac{\mathbf{A} \cdot \mathbf{B}}{\|\mathbf{A}\| \|\mathbf{B}\|}$$
 
 
-
----
-
 ### **Results**
 Despite the increased linguistic intelligence of the model, the initial scores were lower than the TF-IDF baseline:
 
@@ -147,7 +143,6 @@ Despite the increased linguistic intelligence of the model, the initial scores w
 | **Top-5 Accuracy** | **0.2312** |
 | **MRR (Mean Reciprocal Rank)** | **0.1817** |
 
----
 
 ### **Key Technical Insights & Observations**
 * **The "Averaging" Weakness:** Unlike TF-IDF, which automatically rewards rare/important words via the IDF (Inverse Document Frequency) score, simple averaging in FastText treats all words equally. High-frequency words (e.g., "هو", "الذي", "في") pull the final vector toward a "generic" center, reducing the distinctiveness of the definition.
@@ -159,3 +154,64 @@ Despite the increased linguistic intelligence of the model, the initial scores w
 
 ---
 
+## **Experimentation: Dynamic Embeddings (Transformers)**
+
+In this phase, we move from static word-lookup to **Contextual Attention Models**. Unlike previous experiments, Transformers analyze the entire sentence simultaneously, allowing the same word to have different mathematical representations based on its neighbors.
+
+
+### **Methodology: The Transformer Pipeline**
+
+Our approach is divided into two strategies: **Zero-Shot Extraction** (using pre-trained knowledge) and **Supervised Fine-Tuning** (teaching the model the specific relationship between definitions and words).
+
+#### **Stage A: Tokenization & Configuration**
+The tokenizer breaks raw Arabic strings into "Sub-word" units. This is critical for Arabic, as it allows the model to understand roots even when prefixes or suffixes are attached.
+* **Example:** The word "**وبالوالدين**" is tokenized into `['و', 'ب', 'ال', 'والدين']`.
+* **Max Length (128):** We selected a limit of 128 tokens. 
+    * *Too Small:* Truncates long dictionary definitions, losing the "unique" identifiers of a word.
+    * *Too Large:* Increases computational overhead and "dilutes" the vector with padding tokens.
+* **Padding & Truncation:** Ensures all vectors in a batch have the same shape for GPU processing.
+
+
+
+#### **Stage B: The Encoder Architecture**
+Since our task is **Retrieval** (not generation), we use only the **Encoder** block. 
+1.  **Self-Attention Head:** The "Core Engine." It calculates a score for every token relative to every other token. This allows the model to realize that in the definition "بيت الشعر," the word "بيت" refers to a *verse*, not a *house*.
+2.  **Feed-Forward Networks (MLP):** These layers process the attention-weighted information to extract higher-level semantic features.
+
+
+
+#### **Stage C: Pooling Strategies**
+After passing through 12+ layers, the model provides a vector for *every* token. To compare a query to our 76k definitions, we must "collapse" these into one **Sentence Vector**:
+* **Mean Pooling:** Averaging all token vectors.
+* **CLS Token:** Using the vector of the special `[CLS]` token (inserted at the start) which is designed to represent the whole sequence.
+* **Max Pooling:** Taking the maximum value across all tokens for each dimension to highlight the most "striking" features.
+
+
+### **Execution: Zero-Shot vs. Fine-Tuning**
+
+#### **Strategy 1: Zero-Shot (Baseline)**
+We use the models "as-is" to encode the training and test datasets. We then use **Cosine Similarity** to find the closest match.
+* **The In-Vocab Constraint:** Because the training set is a "Closed World" of 76k words, we calculate a specific metric for words that exist in both sets. This identifies if the model is failing because of **Linguistic Logic** or simply because the **Word is New**.
+
+#### **Strategy 2: Fine-Tuning (Alignment)**
+We will re-train the models using **Contrastive Learning**. We "force" the model to move the vector of a definition closer to its specific target word while pushing it away from "distractor" words.
+
+
+### **Model Selection**
+
+We have selected five Arabic models to compare their "Out-of-the-box" understanding of dictionary glosses:
+
+| Model | Source |
+| :--- | :--- |
+| **Arabic-BERT** | Ali Safaya |
+| **AraElectra** | AubMindLab |
+| **AraBERT v2** | AubMindLab |
+| **CamelBERT** | NYU Abu Dhabi |
+| **MARBERT** | UBC-NLP |
+
+
+### **Results**
+
+
+
+### **Key Technical Insights & Observations**
