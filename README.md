@@ -152,7 +152,30 @@ Despite the increased linguistic intelligence, initial scores were lower than th
 
 In this phase, the project moves from static word-lookup to **Contextual Attention Models**. Unlike previous experiments, Transformers analyze the entire sentence simultaneously, allowing the same word to have different mathematical representations based on its neighbors.
 
-### **Methodology: The Transformer Pipeline**
+### **Execution: Zero-Shot vs. Fine-Tuning**
+
+#### **Strategy 1: Zero-Shot (Baseline)**
+The models are used "as-is" to encode the training and test datasets. **Cosine Similarity** is then used to find the closest match.
+* **The In-Vocab Constraint:** Because the training set is a "Closed World" of 76k words, a specific metric is calculated for words existing in both sets. This identifies if failure stems from **Linguistic Logic** or if the **Word is New**.
+
+#### **Strategy 2: Fine-Tuning (Alignment)**
+Models will be re-trained using **Contrastive Learning**. This "forces" the model to move the vector of a definition closer to its specific target word while pushing it away from "distractor" words.
+
+### **Model Selection**
+
+Six Arabic models have been selected to compare "Out-of-the-box" understanding of dictionary glosses:
+
+| Model | Source | HF |
+| :--- | :--- | :--- |
+| **Arabic-BERT** | Ali Safaya | asafaya/bert-base-arabic |
+| **AraElectra** | AubMindLab | aubmindlab/araelectra-base-discriminator |
+| **AraBERT v2** | AubMindLab | aubmindlab/bert-base-arabertv2 |
+| **CamelBERT** | CAMeL-Lab | CAMeL-Lab/bert-base-arabic-camelbert-msa |
+| **MARBERT** | UBC-NLP | UBC-NLP/MARBERT |
+| **MARBERTv2** | UBC-NLP | UBC-NLP/MARBERTv2 |
+
+
+### **Methodology (Zero-Shot Execution): The Transformer Pipeline**
 
 The approach is divided into two strategies: **Zero-Shot Extraction** (using pre-trained knowledge) and **Supervised Fine-Tuning** (teaching the model the specific relationship between definitions and words).
 
@@ -175,28 +198,53 @@ After passing through 12+ layers, the model provides a vector for *every* token.
 * **CLS Token:** Using the vector of the special `[CLS]` token designed to represent the whole sequence.
 * **Max Pooling:** Taking the maximum value across all tokens for each dimension to highlight the most striking features.
 
-### **Execution: Zero-Shot vs. Fine-Tuning**
 
-#### **Strategy 1: Zero-Shot (Baseline)**
-The models are used "as-is" to encode the training and test datasets. **Cosine Similarity** is then used to find the closest match.
-* **The In-Vocab Constraint:** Because the training set is a "Closed World" of 76k words, a specific metric is calculated for words existing in both sets. This identifies if failure stems from **Linguistic Logic** or if the **Word is New**.
+### **Zero-Shot Results**
 
-#### **Strategy 2: Fine-Tuning (Alignment)**
-Models will be re-trained using **Contrastive Learning**. This "forces" the model to move the vector of a definition closer to its specific target word while pushing it away from "distractor" words.
+The following tables summarize the performance of various Transformer models using a **Zero-Shot** approach (Mean Pooling of raw embeddings) without any task-specific fine-tuning.
 
-### **Model Selection**
+#### **1. Top-1 Accuracy**
 
-Five Arabic models have been selected to compare "Out-of-the-box" understanding of dictionary glosses:
+| Model | In-Vocab Accuracy | Overall Accuracy |
+| :--- | :---: | :---: |
+| **CamelBERT** | **22.32%** | **14.84%** |
+| **MARBERTv2** | 16.53% | 10.99% |
+| **MARBERT** | 16.17% | 10.75% |
+| **AraBERT** | 16.06% | 10.68% |
+| **Arabic-BERT** | 16.03% | 10.66% |
+| **AraElectra** | 10.09% | 6.71% |
 
-| Model | Source |
-| :--- | :--- |
-| **Arabic-BERT** | Ali Safaya |
-| **AraElectra** | AubMindLab |
-| **AraBERT v2** | AubMindLab |
-| **CamelBERT** | NYU Abu Dhabi |
-| **MARBERT** | UBC-NLP |
+---
 
-### **Results**
+#### **2. Top-5 Accuracy**
+
+| Model | In-Vocab Accuracy | Overall Accuracy |
+| :--- | :---: | :---: |
+| **CamelBERT** | **37.56%** | **24.97%** |
+| **MARBERTv2** | 27.52% | 18.30% |
+| **MARBERT** | 26.18% | 17.41% |
+| **AraBERT** | 25.95% | 17.25% |
+| **Arabic-BERT** | 25.93% | 17.24% |
+| **AraElectra** | 15.95% | 10.60% |
+
+---
+
+#### **3. Mean Reciprocal Rank (MRR)**
+
+| Model | In-Vocab MRR | Overall MRR |
+| :--- | :---: | :---: |
+| **CamelBERT** | **0.30** | **0.20** |
+| **MARBERTv2** | 0.22 | 0.15 |
+| **MARBERT** | 0.21 | 0.14 |
+| **AraBERT** | 0.21 | 0.14 |
+| **Arabic-BERT** | 0.21 | 0.14 |
+| **AraElectra** | 0.13 | 0.09 |
+
+---
 
 ### **Key Technical Insights & Observations**
+
+* **The CamelBERT Advantage:** CamelBERT shows a nearly **6% lead** in Top-1 accuracy over its closest competitor (MARBERTv2). This suggests its internal "understanding" of formal Arabic vocabulary is superior for this specific dictionary task.
+* **AraElectra Performance:** AraElectra performed significantly worse in Zero-Shot. This is expected, as Electra models are trained as "Discriminator" and often require fine-tuning to produce high-quality semantic embeddings for retrieval tasks.
+
 
