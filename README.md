@@ -222,7 +222,7 @@ The following tables summarize the performance of various Transformer models usi
 | :--- | :---: | :---: |
 | **CamelBERT** | **37.56%** | **24.97%** |
 | **MARBERTv2** | 27.52% | 18.30% |
-| **MARBERT** | 26.18% | 17.41% |
+| **MARBERT** | 26.18% | 17.41% | 
 | **AraBERT** | 25.95% | 17.25% |
 | **Arabic-BERT** | 25.93% | 17.24% |
 | **AraElectra** | 15.95% | 10.60% |
@@ -246,5 +246,145 @@ The following tables summarize the performance of various Transformer models usi
 
 * **The CamelBERT Advantage:** CamelBERT shows a nearly **6% lead** in Top-1 accuracy over its closest competitor (MARBERTv2). This suggests its internal "understanding" of formal Arabic vocabulary is superior for this specific dictionary task.
 * **AraElectra Performance:** AraElectra performed significantly worse in Zero-Shot. This is expected, as Electra models are trained as "Discriminator" and often require fine-tuning to produce high-quality semantic embeddings for retrieval tasks.
+
+---
+
+### **Methodology (Fine Tuning): The Transformer Pipeline**
+This section details the contrastive fine-tuning procedure applied to six state-of-the-art Arabic transformer models. The pipeline aligns gloss definitions with their target lexical items in a shared, semantically structured embedding space using a normalized temperature-scaled cross-entropy (NT-Xent) objective.
+
+#### 1. Architectural Overview
+Each fine-tuned model follows a two-stage architecture:
+1. **Pre-trained Transformer Encoder**: Arabic-specific models (`Arabic-BERT`, `AraBERT`, `CamelBERT`, `MARBERT`, etc.) provide contextualized token representations.
+2. **Task-Specific Projection Head**: A single linear layer maps the model's native hidden dimension to a compact `256`-dimensional space.
+
+#### 2. Contrastive Learning Framework
+Rather than treating word prediction as a classification problem, we frame it as a **dense retrieval alignment task**. For each training sample:
+- A gloss `g` is pulled closer to its true target word embedding `w⁺`.
+- The same gloss is pushed away from `N=5` randomly sampled distractor words `w₁⁻, ..., w₅⁻`.
+- All embeddings are L2-normalized, meaning learning occurs on a **unit hypersphere** where cosine similarity equals dot product. This stabilizes gradients and improves metric compatibility.
+
+#### 3. Loss Function: NT-Xent (InfoNCE)
+The optimization objective is the **Normalized Temperature-scaled Cross-Entropy (NT-Xent)** loss, mathematically equivalent to the code's `F.cross_entropy(similarities / τ, targets=0)`:
+
+For a batch of size `B` and `N` negatives per sample:
+1. **Compute Similarities**:
+   $$
+   s_{\text{pos}} = \cos(z_g, z_{w^+}) \in \mathbb{R}^B
+   $$
+   $$
+   s_{\text{neg}} = \left[ \cos(z_g, z_{w_1^-}), \dots, \cos(z_g, z_{w_N^-}) \right] \in \mathbb{R}^{B \times N}
+   $$
+
+2. **Scale by Temperature**:
+   $$
+   \text{logits} = \left[ \frac{s_{\text{pos}}}{\tau}, \frac{s_{\text{neg}}}{\tau} \right] \in \mathbb{R}^{B \times (1+N)}
+   $$
+
+3. **Cross-Entropy with Target 0**:
+   $$
+   \mathcal{L} = -\frac{1}{B} \sum_{i=1}^{B} \log \left( \frac{\exp(s_{\text{pos}}^{(i)} / \tau)}{\exp(s_{\text{pos}}^{(i)} / \tau) + \sum_{j=1}^{N} \exp(s_{\text{neg}, j}^{(i)} / \tau)} \right)
+   $$
+
+**Why this works**: The loss rewards high positive similarity while penalizing high negative similarity. The denominator normalizes the score across all candidates, forcing the model to learn *relative* distances rather than absolute magnitudes.
+
+#### 4. Negative Sampling Strategy
+- **Count**: `negative_sample_size = 5` per gloss.
+- **Sampling**: Negatives are drawn from the training vocabulary excluding the true target word.
+- **Implementation**: Instead of encoding negatives sequentially, all `B × N` negatives are **flattened into a single batch**, tokenized, and passed through the transformer in one forward pass. The resulting embeddings are reshaped back to `(B, N, 256)` for loss computation.
+- **Why 5?**: Empirically balances discriminative pressure and GPU memory. Fewer negatives yield weak gradients; more negatives increase compute without proportional gains in retrieval accuracy.
+
+#### 5. Step-by-Step Epoch Workflow
+Each training epoch processes the dataset in batches (`batch_size=128`) through the following pipeline:
+
+| Step | Operation | Implementation Detail |
+|------|-----------|------------------------|
+| **1. Tokenization** | Convert glosses, true words, and negatives to `input_ids` + `attention_mask` | `max_length=128`, truncation + dynamic padding |
+| **2. Forward Pass** | Encode all sequences through the transformer | Single pass for positives, batched pass for negatives |
+| **3. Masked Mean Pooling** | Aggregate token states to sentence vectors | `∑(h_t · mask_t) / ∑(mask_t)`, ignoring padding tokens |
+| **4. Projection & Norm** | Apply linear head + L2 normalization | `F.normalize(W·h + b, p=2, dim=1)` |
+| **5. Similarity & Loss** | Compute NT-Xent loss | Temperature scaling → `cross_entropy` with target `0` |
+| **6. Backward & Update** | Gradient computation & optimizer step | Mixed precision (FP16), gradient clipping (`max_norm=1.0`), AdamW |
+| **7. LR Scheduling** | Update learning rate | Linear warmup (`500` steps) → linear decay to `0` |
+
+#### 6. Hyperparameter Configuration & Rationale
+| Parameter | Value | Rationale |
+|-----------|-------|-----------|
+| `batch_size` | `128` | Provides stable gradient estimates; maximizes GPU utilization for batched negative encoding |
+| `learning_rate` | `2e-5` | Standard fine-tuning rate for BERT-family models; prevents catastrophic forgetting |
+| `num_epochs` | `3` | Sufficient for convergence on gloss-word alignment without overfitting |
+| `warmup_steps` | `500` | Stabilizes early updates when embedding similarities are noisy |
+| `max_length` | `128` | Captures full Arabic glosses (~95th percentile length) without excessive padding |
+| `temperature` | `0.07` | Sharpens softmax distribution; empirically optimal for sentence-level contrastive learning |
+| `negative_sample_size` | `5` | Balances contrastive pressure, memory footprint, and training throughput |
+
+#### 7. Optimization & Training Stability
+To ensure robust convergence across diverse Arabic model architectures, the pipeline incorporates several industry-standard stabilization techniques:
+- **AdamW Optimizer**: Decouples weight decay from gradient updates, applied only to the base transformer (projection head uses `weight_decay=0.0`).
+- **Gradient Clipping**: `clip_grad_norm_(..., max_norm=1.0)` prevents exploding gradients.
+- **Mixed Precision (AMP)**: `torch.autocast` + `GradScaler` accelerates training by ~2× and reduces VRAM usage without sacrificing numerical stability.
+- **Projection Isolation**: The linear head is trained jointly but regularized separately, allowing the transformer to retain general Arabic semantics while adapting to gloss-word alignment.
+
+#### 8. Evaluation Protocol (Post-Training)
+After fine-tuning, models are evaluated via **gloss-to-word retrieval**:
+1. All train/test glosses are embedded using the trained projection head.
+2. Test gloss similarities are computed against all train word embeddings (L2-normalized cosine similarity).
+3. Per-word scores are aggregated via **max-pooling** across multiple glosses per word.
+4. Ranking metrics are computed: `Top-1`, `Top-5`, and `Mean Reciprocal Rank (MRR)`, reported separately for In-Vocabulary (IV) and Out-Of-Vocabulary (OOV) test samples.
+
+
+### **Fine Tuning Results**
+The following shows the fine-tuning loss per epoch for each model:
+| Model | Epoch 1 | Epoch 2 | Epoch 3 | Average Epoch Duration(mins) | 
+| :--- | :---: | :---: | :---: | :---: |
+| **CamelBERT** | | | | |
+| **MARBERTv2** | | | | |
+| **MARBERT** | | | | |
+| **AraBERT** | 0.7003 | 0.3246 | 0.2607 | 21:36,  2.18s/it |
+| **Arabic-BERT** | 0.4569 | 0.1965 | 0.1187 | 20:59,  1.89it/s |
+| **AraElectra** | 0.7004 | 0.2425 | 0.1658 | 21:17, 1.87it/s |
+
+The following tables summarize the performance of the models after fine-tuning for the task.
+
+#### **1. Top-1 Accuracy**
+
+| Model | In-Vocab Accuracy | Overall Accuracy |
+| :--- | :---: | :---: |
+| **CamelBERT** | | |
+| **MARBERTv2** | | |
+| **MARBERT** | | |
+| **AraBERT** | 38.20% | 25.40% |
+| **Arabic-BERT** | 39.54% | 26.30% |
+| **AraElectra** | 29.83%  | 19.83% |
+
+---
+
+#### **2. Top-5 Accuracy**
+
+| Model | In-Vocab Accuracy | Overall Accuracy |
+| :--- | :---: | :---: |
+| **CamelBERT** | | |
+| **MARBERTv2** | | |
+| **MARBERT** | | |
+| **AraBERT** | 53.85% | 35.81% |
+| **Arabic-BERT** | 55.66% | 37.01% |
+| **AraElectra** | 46.23% | 30.74% |
+
+---
+
+#### **3. Mean Reciprocal Rank (MRR)**
+
+| Model | In-Vocab Accuracy | Overall Accuracy |
+| :--- | :---: | :---: |
+| **CamelBERT** | | |
+| **MARBERTv2** | | |
+| **MARBERT** | | |
+| **AraBERT** | 0.46 | 0.30 |
+| **Arabic-BERT** | 0.47 | 0.31 |
+| **AraElectra** | 0.38 | 0.25 |
+
+---
+
+### **Key Technical Insights & Observations**
+
 
 
