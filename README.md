@@ -351,7 +351,7 @@ The following tables summarize the performance of the models after fine-tuning f
 
 | Model | In-Vocab Accuracy | Overall Accuracy |
 | :--- | :---: | :---: |
-| **CamelBERT** | 41.48% | 27.59% |
+| **CamelBERT** | **41.48%** | **27.59%** |
 | **MARBERTv2** | 40.60% | 27.00% |
 | **MARBERT** | 38.85% | 25.83% |
 | **AraBERT** | 38.20% | 25.40% |
@@ -364,7 +364,7 @@ The following tables summarize the performance of the models after fine-tuning f
 
 | Model | In-Vocab Accuracy | Overall Accuracy |
 | :--- | :---: | :---: |
-| **CamelBERT** | 59.78% | 39.75% |
+| **CamelBERT** | **59.78%** | **39.75%** |
 | **MARBERTv2** | 58.41% | 38.84% |
 | **MARBERT** | 56.34% | 37.47% |
 | **AraBERT** | 53.85% | 35.81% |
@@ -377,7 +377,7 @@ The following tables summarize the performance of the models after fine-tuning f
 
 | Model | In-Vocab Accuracy | Overall Accuracy |
 | :--- | :---: | :---: |
-| **CamelBERT** | 0.50 | 0.33 |
+| **CamelBERT** | **0.50** | **0.33** |
 | **MARBERTv2** | 0.49 | 0.32 |
 | **MARBERT** | 0.47 | 0.31 |
 | **AraBERT** | 0.46 | 0.30 |
