@@ -267,23 +267,25 @@ Rather than treating word prediction as a classification problem, we frame it as
 The optimization objective is the **Normalized Temperature-scaled Cross-Entropy (NT-Xent)** loss, mathematically equivalent to the code's `F.cross_entropy(similarities / τ, targets=0)`:
 
 For a batch of size `B` and `N` negatives per sample:
-1. **Compute Similarities**:
-   $$
-   s_{\text{pos}} = \cos(z_g, z_{w^+}) \in \mathbb{R}^B
-   $$
-   $$
-   s_{\text{neg}} = \left[ \cos(z_g, z_{w_1^-}), \dots, \cos(z_g, z_{w_N^-}) \right] \in \mathbb{R}^{B \times N}
-   $$
 
-2. **Scale by Temperature**:
-   $$
-   \text{logits} = \left[ \frac{s_{\text{pos}}}{\tau}, \frac{s_{\text{neg}}}{\tau} \right] \in \mathbb{R}^{B \times (1+N)}
-   $$
+**1. Compute Similarities**:
+```math
+s_{\text{pos}} = \cos(z_g, z_{w^+}) \in \mathbb{R}^B
+```
 
-3. **Cross-Entropy with Target 0**:
-   $$
-   \mathcal{L} = -\frac{1}{B} \sum_{i=1}^{B} \log \left( \frac{\exp(s_{\text{pos}}^{(i)} / \tau)}{\exp(s_{\text{pos}}^{(i)} / \tau) + \sum_{j=1}^{N} \exp(s_{\text{neg}, j}^{(i)} / \tau)} \right)
-   $$
+```math
+s_{\text{neg}} = \left[ \cos(z_g, z_{w_1^-}), \dots, \cos(z_g, z_{w_N^-}) \right] \in \mathbb{R}^{B \times N}
+```
+
+**2. Scale by Temperature**:
+```math
+\text{logits} = \left[ \frac{s_{\text{pos}}}{\tau}, \frac{s_{\text{neg}}}{\tau} \right] \in \mathbb{R}^{B \times (1+N)}
+```
+
+**3. Cross-Entropy with Target 0**:
+```math
+\mathcal{L} = -\frac{1}{B} \sum_{i=1}^{B} \log \left( \frac{\exp(s_{\text{pos}}^{(i)} / \tau)}{\exp(s_{\text{pos}}^{(i)} / \tau) + \sum_{j=1}^{N} \exp(s_{\text{neg}, j}^{(i)} / \tau)} \right)
+```
 
 **Why this works**: The loss rewards high positive similarity while penalizing high negative similarity. The denominator normalizes the score across all candidates, forcing the model to learn *relative* distances rather than absolute magnitudes.
 
@@ -336,9 +338,9 @@ After fine-tuning, models are evaluated via **gloss-to-word retrieval**:
 The following shows the fine-tuning loss per epoch for each model:
 | Model | Epoch 1 | Epoch 2 | Epoch 3 | Average Epoch Duration(mins) | 
 | :--- | :---: | :---: | :---: | :---: |
-| **CamelBERT** | | | | |
-| **MARBERTv2** | | | | |
-| **MARBERT** | | | | |
+| **CamelBERT** | 0.3533 | 0.1509 | 0.1039 | 20:31,  1.03s/it |
+| **MARBERTv2** | 1.5419 | 0.1987 | 0.1335 | 19:11  1.03it/s |
+| **MARBERT** | 0.5900 | 0.1966 | 0.1146 | 19:11  1.03it/s |
 | **AraBERT** | 0.7003 | 0.3246 | 0.2607 | 21:36,  2.18s/it |
 | **Arabic-BERT** | 0.4569 | 0.1965 | 0.1187 | 20:59,  1.89it/s |
 | **AraElectra** | 0.7004 | 0.2425 | 0.1658 | 21:17, 1.87it/s |
@@ -349,9 +351,9 @@ The following tables summarize the performance of the models after fine-tuning f
 
 | Model | In-Vocab Accuracy | Overall Accuracy |
 | :--- | :---: | :---: |
-| **CamelBERT** | | |
-| **MARBERTv2** | | |
-| **MARBERT** | | |
+| **CamelBERT** | 41.48% | 27.59% |
+| **MARBERTv2** | 40.60% | 27.00% |
+| **MARBERT** | 38.85% | 25.83% |
 | **AraBERT** | 38.20% | 25.40% |
 | **Arabic-BERT** | 39.54% | 26.30% |
 | **AraElectra** | 29.83%  | 19.83% |
@@ -362,9 +364,9 @@ The following tables summarize the performance of the models after fine-tuning f
 
 | Model | In-Vocab Accuracy | Overall Accuracy |
 | :--- | :---: | :---: |
-| **CamelBERT** | | |
-| **MARBERTv2** | | |
-| **MARBERT** | | |
+| **CamelBERT** | 59.78% | 39.75% |
+| **MARBERTv2** | 58.41% | 38.84% |
+| **MARBERT** | 56.34% | 37.47% |
 | **AraBERT** | 53.85% | 35.81% |
 | **Arabic-BERT** | 55.66% | 37.01% |
 | **AraElectra** | 46.23% | 30.74% |
@@ -375,9 +377,9 @@ The following tables summarize the performance of the models after fine-tuning f
 
 | Model | In-Vocab Accuracy | Overall Accuracy |
 | :--- | :---: | :---: |
-| **CamelBERT** | | |
-| **MARBERTv2** | | |
-| **MARBERT** | | |
+| **CamelBERT** | 0.50 | 0.33 |
+| **MARBERTv2** | 0.49 | 0.32 |
+| **MARBERT** | 0.47 | 0.31 |
 | **AraBERT** | 0.46 | 0.30 |
 | **Arabic-BERT** | 0.47 | 0.31 |
 | **AraElectra** | 0.38 | 0.25 |
@@ -386,5 +388,11 @@ The following tables summarize the performance of the models after fine-tuning f
 
 ### **Key Technical Insights & Observations**
 
+* **CamelBERT Performance:** It maintained its lead from the baseline, showing that its diverse pre-training on dialects and MSA provided the most stable foundation for this task.
 
+* **The Equalization Effect:** Fine-tuning significantly closed the gap between models, showing that contrastive alignment can overcome initial architectural weaknesses.
+
+* **AraElectra’s Recovery:** Despite poor zero-shot performance, its accuracy tripled after fine-tuning, confirming that discriminator models require task-specific training to produce useful embeddings.
+
+* **Semantic Neighborhoods:** The high Top-5 accuracy suggests the models are effectively clustering synonyms and related concepts, even when they miss the exact target word.
 
