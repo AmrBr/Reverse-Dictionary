@@ -7,7 +7,7 @@ class Config:
     hf_token: str = None         
     definition_col: str = "gloss"
     label_col: str = "word"
-    model_choice: str = "gemma"    
+    model_choice: str = "qwen"    
     results_file: str = "data/results.jsonl"
     mlx_model_path: str = "mlx-community/Qwen3.5-4B-MLX-8bit"
     lm_studio_url: str = "http://localhost:1234/v1"

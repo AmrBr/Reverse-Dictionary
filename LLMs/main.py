@@ -7,11 +7,10 @@ from tqdm import tqdm
 from config.settings import Config
 from data.loader import load_hf_dataset, load_already_done
 from models import load_model
-from evaluation.metrics import compute_metrics, print_metrics
+from evaluation.metrics import compute_metrics, print_metrics, compute_metrics_normalized
 from evaluation.parser import parse_response
 
 load_dotenv() 
-
 
 def main():
     cfg = Config()
@@ -64,8 +63,10 @@ def main():
 
     # Metrics
     metrics = compute_metrics(all_results)
-    print_metrics(metrics)
+    print_metrics(metrics, stage="Raw Matching")
 
+    metrics = compute_metrics_normalized(all_results)
+    print_metrics(metrics, stage="Morphological Matching")
 
 if __name__ == "__main__":
     main()

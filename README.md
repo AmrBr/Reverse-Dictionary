@@ -454,6 +454,7 @@ To ensure fairness, performance is measured using two methods: **Raw Matching** 
 * **Cleaning:** Stripping diacritics (Tashkeel) and elongation (Tatweel).
 * **Article Stripping:** Removing the definite article (ال).
 * **Lemmatization:** Converting plurals or duals to singular forms to match the ground truth.
+* **Root:** Converting both words to the Arabic root to match the ground truth.
 
 #### **3. Retrieval-Augmented Generation (RAG)**
 [TBD]
@@ -497,3 +498,5 @@ To ensure fairness, performance is measured using two methods: **Raw Matching** 
 ### **Key Technical Insights & Observations**
 
 * **The Reasoning Loop:** A significant challenge was the model’s tendency to "overthink" or generate internal reasoning (CoT) even when instructed not to. This increased token usage and slowed down the inference over the 9k record test set.
+
+* **Data Quality Challenges:** Some of the data and glosses in the dataset are ambiguous or difficult to interpret, even for humans. The model's performance, while not perfect, was not far off considering these inherent ambiguities in the test set.
