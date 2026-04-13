@@ -286,8 +286,10 @@ s_{\text{neg}} = \left[ \cos(z_g, z_{w_1^-}), \dots, \cos(z_g, z_{w_N^-}) \right
 ```math
 \mathcal{L} = -\frac{1}{B} \sum_{i=1}^{B} \log \left( \frac{\exp(s_{\text{pos}}^{(i)} / \tau)}{\exp(s_{\text{pos}}^{(i)} / \tau) + \sum_{j=1}^{N} \exp(s_{\text{neg}, j}^{(i)} / \tau)} \right)
 ```
-
-**Why this works**: The loss rewards high positive similarity while penalizing high negative similarity. The denominator normalizes the score across all candidates, forcing the model to learn *relative* distances rather than absolute magnitudes.
+* Averaging the loss over the whole batch so one "weird" definition doesn't ruin the training
+* **The Goal:** If the model is doing a great job, the numerator becomes much larger than the sum of the negatives. The fraction then approaches 1.
+* The -log is mainly because if the fraction is 1 (perfect prediction), log(1)=0. The loss is zero, and if he fraction is very small (e.g., 0.001, meaning the model thinks a distractor is the right word), log(0.001) is a large negative number. The negative sign in front makes it a large positive loss. So the model is penalized if the correct word isn't significantly more similar to the definition.  
+* **Why this works**: The loss rewards high positive similarity while penalizing high negative similarity. The denominator normalizes the score across all candidates, forcing the model to learn *relative* distances rather than absolute magnitudes.
 
 #### 4. Negative Sampling Strategy
 - **Count**: `negative_sample_size = 5` per gloss.
