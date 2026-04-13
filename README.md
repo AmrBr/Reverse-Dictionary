@@ -426,7 +426,7 @@ The codebase is structured to be modular, allowing for a clean separation betwee
     gemma.py         # OpenAI-compatible API wrapper for Gemma.
     qwen.py          # Native MLX implementation for Qwen.
 /retrieval
-    index.py         # FAISS vector database management.
+    index.py         # Vector database management.
     retriever.py     # Candidate retrieval logic for RAG.
 
 main.py              # Orchestration of the full evaluation pipeline.
