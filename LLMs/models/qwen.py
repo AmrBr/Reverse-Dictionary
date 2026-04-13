@@ -12,8 +12,7 @@ class QwenModel(BaseModel):
         self.model, self.tokenizer = mlx_lm.load(model_path)
         print("Qwen ready.")
 
-    def query(self, definition: str) -> str:
-        prompt = self.build_prompt(definition)
+    def query(self, prompt: str) -> str:
         return mlx_lm.generate(
             self.model,
             self.tokenizer,

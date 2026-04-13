@@ -14,8 +14,7 @@ class GemmaModel(BaseModel):
         self.model_name = model_name
         print("Gemma ready.")
 
-    def query(self, definition: str) -> str:
-        prompt = self.build_prompt(definition)
+    def query(self, prompt: str) -> str:
         response = self.client.chat.completions.create(
             model=self.model_name,
             messages=[{"role": "user", "content": prompt}],

@@ -456,8 +456,25 @@ To ensure fairness, performance is measured using two methods: **Raw Matching** 
 * **Lemmatization:** Converting plurals or duals to singular forms to match the ground truth.
 * **Root:** Converting both words to the Arabic root to match the ground truth.
 
+Beyond traditional metrics, additional measurements were implemented to assess output quality and consistency:
+* **Coverage Rate:** How often the model returned any prediction at all, indicating when the model failed or refused to generate output.
+* **Prediction Count Distribution:** Whether the model consistently returned 5 predictions or if the count was variable, measuring adherence to instructions.
+* **Repetition Rate:** How often the model repeated the same word within one response despite explicit instructions to avoid repetition.
+* **Average Prediction Length:** Measures whether the model returns words versus phrases versus sentences. For a reverse dictionary, shorter outputs are preferred.
+* **Language Consistency:** The percentage of predictions that are actually Arabic versus slipping into English or other languages.
+
 #### **3. Retrieval-Augmented Generation (RAG)**
-[TBD]
+
+RAG was implemented using **ChromaDB** for vector database management due to its simplicity and suitability for datasets of this size. For embedding generation, **intfloat/multilingual-e5-base** was selected as it supports 100 languages including Arabic and is trained on large corpora. The embeddings, combined with definitions and labels, are stored in ChromaDB with `normalize_embeddings=True` to facilitate cosine similarity search and persisted to disk.
+
+During inference, test definitions are embedded using the same embedding model, and the training index retrieves the top 3 candidates (configurable in settings, but 3 was chosen for this experiment). These candidates are added to the prompt as in-context examples following the pattern:
+
+```
+التعريف: حلو المنطق، مليح اللفظ.
+الإجابة: معسول الكلام
+```
+
+This allows the model to observe the pattern from examples and follow it in its responses.
 
 ### **LLM Results (Zero-Shot)**
 
@@ -475,6 +492,13 @@ To ensure fairness, performance is measured using two methods: **Raw Matching** 
 | **Gemma4** | [TBD] | [TBD] | [TBD] |
 | **Qwen3.5** | [TBD] | [TBD] | [TBD] | 
 
+**Other Metrics**
+
+| Model | Coverage | Repetition Rate |  Average Word Length | Language Consistency
+| :--- | :---: | :---: | :---: | :---: |
+| **Gemma4** | [TBD] | [TBD] | [TBD] | [TBD] |
+| **Qwen3.5** | [TBD] | [TBD] | [TBD] | [TBD] |
+
 ---
 
 ### **LLM Results (RAG)**
@@ -491,7 +515,14 @@ To ensure fairness, performance is measured using two methods: **Raw Matching** 
 | Model | Overall Top1 | Overall Top5 |  Overall MRR |
 | :--- | :---: | :---: | :---: |
 | **Gemma4** | [TBD] | [TBD] | [TBD] |
-| **Qwen3.5** | [TBD] | [TBD] | [TBD] | 
+| **Qwen3.5** | [TBD] | [TBD] | [TBD] |
+
+**Other Metrics**
+
+| Model | Coverage | Repetition Rate |  Average Word Length | Language Consistency
+| :--- | :---: | :---: | :---: | :---: |
+| **Gemma4** | [TBD] | [TBD] | [TBD] | [TBD] |
+| **Qwen3.5** | [TBD] | [TBD] | [TBD] | [TBD] |
 
 ---
 

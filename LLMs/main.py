@@ -7,8 +7,9 @@ from tqdm import tqdm
 from config.settings import Config
 from data.loader import load_hf_dataset, load_already_done
 from models import load_model
-from evaluation.metrics import compute_metrics, print_metrics, compute_metrics_normalized
+from evaluation.metrics import compute_metrics, print_metrics, compute_metrics_normalized, generate_report
 from evaluation.parser import parse_response
+from retrieval.retriever import Retriever
 
 load_dotenv() 
 
@@ -19,6 +20,9 @@ def main():
     print("Loading dataset...")
     ds = load_hf_dataset(cfg)
 
+    if cfg.use_rag:
+        print("Initializing retriever...")
+        retriever = Retriever(cfg)
     # Load model
     model = load_model(cfg)
 
@@ -44,7 +48,9 @@ def main():
             label      = record[cfg.label_col]
 
             try:
-                raw_output  = model.query(definition)
+                examples = retriever.get_examples(definition) if cfg.use_rag else ""
+                prompt = model.build_prompt(definition, examples)
+                raw_output  = model.query(prompt)
                 predictions = parse_response(raw_output)
             except Exception as e:
                 print(f"\nError at index {i}: {e}")
@@ -67,6 +73,8 @@ def main():
 
     metrics = compute_metrics_normalized(all_results)
     print_metrics(metrics, stage="Morphological Matching")
+    
+    generate_report(all_results)
 
 if __name__ == "__main__":
     main()

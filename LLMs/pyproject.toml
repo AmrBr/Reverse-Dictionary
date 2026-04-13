@@ -6,9 +6,12 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "camel-tools>=1.5.2",
+    "chromadb>=1.5.7",
     "datasets>=4.8.4",
     "dotenv>=0.9.9",
     "mlx-lm>=0.31.2",
+    "numpy>=2.4.4",
     "openai>=2.31.0",
+    "sentence-transformers>=5.4.0",
     "tqdm>=4.67.3",
 ]

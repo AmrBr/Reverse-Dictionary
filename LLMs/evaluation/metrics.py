@@ -3,6 +3,8 @@ from camel_tools.morphology.database import MorphologyDB
 from camel_tools.morphology.analyzer import Analyzer
 from camel_tools.utils.dediac import dediac_ar
 from camel_tools.utils.normalize import normalize_alef_maksura_ar, normalize_alef_ar, normalize_teh_marbuta_ar
+from collections import Counter
+import numpy as np
 
 db = MorphologyDB.builtin_db() # calima-msa-r13
 analyzer = Analyzer(db)
@@ -130,3 +132,46 @@ def print_metrics(metrics: dict, stage: str) -> None:
     print(f"  Top-5 : {metrics['top5']:.2%}")
     print(f"  MRR   : {metrics['mrr']:.4f}")
     print(f"  Total : {metrics['total']} records")
+    
+def generate_report(results: list[dict]) -> None:
+    """Generate a detailed report of predictions and errors."""
+    # finding coverage (how many records had at least one prediction)
+    coverage = sum(1 for r in results if len(r["predictions"]) > 0) / len(results)
+    
+    # finding distribution of prediction counts
+    count_dist = Counter(len(r["predictions"]) for r in results)
+
+    # finding repetition rate (how many records had duplicate predictions)
+    repetition_rate = sum(1 for r in results if has_repetition(r["predictions"])) / len(results)
+    
+    # finding average word length of predictions
+    avg_word_length = np.mean([
+        np.mean([len(p.split()) 
+                 for p in r["predictions"]]) for r in results if r["predictions"]
+        ])
+    
+    # calculating ratio of Arabic predictions to other langagues
+    total = correct = 0
+    for r in results:
+        for pred in r["predictions"]:
+            total += 1
+            if is_arabic(pred):
+                correct += 1
+    arabic_ratio = correct / total if total > 0 else 0
+    
+    print("\n── Detailed Report ──────────────────────")
+    print(f"  Coverage: {coverage:.2%}/{len(results)} of records had at least one prediction")
+    print(f"  Prediction Count Distribution: {dict(count_dist)}")
+    print(f"  Repetition Rate: {repetition_rate:.2%} of records had duplicate predictions")
+    print(f"  Average Word Length: {avg_word_length:.2f} words per prediction")
+    print(f"  Arabic Ratio: {arabic_ratio:.2%} of all predictions were Arabic")
+    
+    
+def has_repetition(predictions: list[str]) -> bool:
+    normalised = [p.strip().lower() for p in predictions]
+    return len(normalised) != len(set(normalised))
+
+def is_arabic(text: str) -> bool:
+    arabic_chars = len(re.findall(r'[\u0600-\u06FF]', text))
+    return arabic_chars / max(len(text.replace(" ", "")), 1) > 0.5
+
