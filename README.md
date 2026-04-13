@@ -396,3 +396,104 @@ The following tables summarize the performance of the models after fine-tuning f
 
 * **Semantic Neighborhoods:** The high Top-5 accuracy suggests the models are effectively clustering synonyms and related concepts, even when they miss the exact target word.
 
+---
+
+## **Experimentation: Large Language Models (LLMs)**
+
+In this phase, the project shifts into the era of Generative AI. This section explores two primary approaches: **Zero-Shot Inference** (using the model's internal pre-trained knowledge) and **Retrieval-Augmented Generation (RAG)** (providing the model with relevant context from a dataset).
+
+### **Model Selection**
+To perform these experiments locally on a **16GB Apple Silicon**, models were selected based on their Arabic proficiency and parameter efficiency.
+
+| Model | Source | Format | Implementation |
+| :--- | :--- | :--- | :--- |
+| **Gemma-4-E4B** | Google | GGUF (Q4_K_M) | Served via LM Studio API |
+| **Qwen3.5-4B** | Alibaba | MLX (8-bit) | Native MLX-LM Framework |
+
+### **Project Architecture**
+The codebase is structured to be modular, allowing for a clean separation between the inference engine, the data handling, and the evaluation logic.
+
+```text
+/config
+    settings.py      # Environment variables and model hyperparameters.
+/data
+    loader.py        # Dataset streaming and progress tracking (checkpointing).
+/evaluation
+    metrics.py       # Implementation of Top-1, Top-5, and MRR.
+    parser.py        # Regex-based output extraction for structured results.
+/models
+    base.py          # Abstract base class for model consistency.
+    gemma.py         # OpenAI-compatible API wrapper for Gemma.
+    qwen.py          # Native MLX implementation for Qwen.
+/retrieval
+    index.py         # FAISS vector database management.
+    retriever.py     # Candidate retrieval logic for RAG.
+
+main.py              # Orchestration of the full evaluation pipeline.
+```
+
+### **Methodology**
+
+#### **1. Prompt Engineering**
+A unified prompt was designed to constrain the models to a structured output format suitable for parsing:
+
+> "أنت قاموس عكسي للغة العربية. بناءً على التعريف المعطى، اذكر أفضل 5 كلمات عربية تناسب هذا التعريف.
+> 
+> **القواعد:**
+> - أعد فقط قائمة مرقمة من 1 إلى 5
+> - كل إجابة يجب أن تكون كلمة أو عبارة عربية واحدة فقط
+> - رتب من الأكثر احتمالاً إلى الأقل
+> - لا تكتب أي شرح أو نص إضافي
+> - لا تكرر نفس الكلمة
+> 
+> **التعريف:** {definition}"
+
+#### **2. Evaluation & Normalization**
+To ensure fairness, performance is measured using two methods: **Raw Matching** and **Morphological Matching**. The latter uses **CAMeL Tools** to prevent penalizing the model for correct answers with minor variations:
+* **Orthographic Normalization:** Unifying Alef, Teh Marbuta, and Alef Maksura.
+* **Cleaning:** Stripping diacritics (Tashkeel) and elongation (Tatweel).
+* **Article Stripping:** Removing the definite article (ال).
+* **Lemmatization:** Converting plurals or duals to singular forms to match the ground truth.
+
+#### **3. Retrieval-Augmented Generation (RAG)**
+[TBD]
+
+### **LLM Results (Zero-Shot)**
+
+**Raw Matching Results:** 
+
+| Model | Overall Top1 | Overall Top5 |  Overall MRR |
+| :--- | :---: | :---: | :---: |
+| **Gemma4** | [TBD] | [TBD] | [TBD] |
+| **Qwen3.5** | [TBD] | [TBD] | [TBD] | 
+
+**Morphological Matching Results:**
+
+| Model | Overall Top1 | Overall Top5 |  Overall MRR |
+| :--- | :---: | :---: | :---: |
+| **Gemma4** | [TBD] | [TBD] | [TBD] |
+| **Qwen3.5** | [TBD] | [TBD] | [TBD] | 
+
+---
+
+### **LLM Results (RAG)**
+
+**Raw Matching Results:** 
+
+| Model | Overall Top1 | Overall Top5 |  Overall MRR |
+| :--- | :---: | :---: | :---: |
+| **Gemma4** | [TBD] | [TBD] | [TBD] |
+| **Qwen3.5** | [TBD] | [TBD] | [TBD] | 
+
+**Morphological Matching Results:**
+
+| Model | Overall Top1 | Overall Top5 |  Overall MRR |
+| :--- | :---: | :---: | :---: |
+| **Gemma4** | [TBD] | [TBD] | [TBD] |
+| **Qwen3.5** | [TBD] | [TBD] | [TBD] | 
+
+---
+
+### **Key Technical Insights & Observations**
+
+* **The Reasoning Loop:** A significant challenge was the model’s tendency to "overthink" or generate internal reasoning (CoT) even when instructed not to. This increased token usage and slowed down the inference over the 9k record test set.
