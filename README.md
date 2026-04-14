@@ -485,21 +485,21 @@ This allows the model to observe the pattern from examples and follow it in its 
 | Model | Overall Top1 | Overall Top5 |  Overall MRR |
 | :--- | :---: | :---: | :---: |
 | **Gemma4** | [TBD] | [TBD] | [TBD] |
-| **Qwen3.5** | [TBD] | [TBD] | [TBD] | 
+| **Qwen3.5** | 10.50% | 16.60% | 0.1310 | 
 
 **Morphological Matching Results:**
 
 | Model | Overall Top1 | Overall Top5 |  Overall MRR |
 | :--- | :---: | :---: | :---: |
 | **Gemma4** | [TBD] | [TBD] | [TBD] |
-| **Qwen3.5** | [TBD] | [TBD] | [TBD] | 
+| **Qwen3.5** | 26.25% | 50.40% | 0.4163 | 
 
 **Other Metrics**
 
 | Model | Coverage | Repetition Rate |  Average Word Length | Language Consistency
 | :--- | :---: | :---: | :---: | :---: |
 | **Gemma4** | [TBD] | [TBD] | [TBD] | [TBD] |
-| **Qwen3.5** | [TBD] | [TBD] | [TBD] | [TBD] |
+| **Qwen3.5** | 100% | 26.30% | 1.36 | 99.62% |
 
 ---
 

@@ -10,6 +10,7 @@ from models import load_model
 from evaluation.metrics import compute_metrics, print_metrics, compute_metrics_normalized, generate_report
 from evaluation.parser import parse_response
 from retrieval.retriever import Retriever
+from retrieval.index import build_index
 
 load_dotenv() 
 
@@ -21,6 +22,8 @@ def main():
     ds = load_hf_dataset(cfg)
 
     if cfg.use_rag:
+        print("Building index (if not already built)...")
+        build_index(cfg)
         print("Initializing retriever...")
         retriever = Retriever(cfg)
     # Load model
@@ -48,7 +51,7 @@ def main():
             label      = record[cfg.label_col]
 
             try:
-                examples = retriever.get_examples(definition) if cfg.use_rag else ""
+                examples = retriever.augment(definition) if cfg.use_rag else ""
                 prompt = model.build_prompt(definition, examples)
                 raw_output  = model.query(prompt)
                 predictions = parse_response(raw_output)
@@ -66,7 +69,8 @@ def main():
             all_results.append(result)
             out_file.write(json.dumps(result, ensure_ascii=False) + "\n")
             out_file.flush()
-
+            if i == 999:
+                break
     # Metrics
     metrics = compute_metrics(all_results)
     print_metrics(metrics, stage="Raw Matching")

@@ -212,3 +212,5 @@ Notes.md
 *.csv
 *.jsonl
 .DS_Store
+
+chroma_index/

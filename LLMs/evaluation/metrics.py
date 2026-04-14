@@ -160,7 +160,7 @@ def generate_report(results: list[dict]) -> None:
     arabic_ratio = correct / total if total > 0 else 0
     
     print("\n── Detailed Report ──────────────────────")
-    print(f"  Coverage: {coverage:.2%}/{len(results)} of records had at least one prediction")
+    print(f"  Coverage: {coverage:.2%} of records had at least one prediction")
     print(f"  Prediction Count Distribution: {dict(count_dist)}")
     print(f"  Repetition Rate: {repetition_rate:.2%} of records had duplicate predictions")
     print(f"  Average Word Length: {avg_word_length:.2f} words per prediction")
