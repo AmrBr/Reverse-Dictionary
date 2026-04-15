@@ -52,8 +52,7 @@ def main():
 
             try:
                 examples = retriever.augment(definition) if cfg.use_rag else ""
-                prompt = model.build_prompt(definition, examples)
-                raw_output  = model.query(prompt)
+                raw_output  = model.query(definition, examples)
                 predictions = parse_response(raw_output)
             except Exception as e:
                 print(f"\nError at index {i}: {e}")

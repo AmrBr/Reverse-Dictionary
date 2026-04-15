@@ -1,6 +1,6 @@
 # **Reverse-Dictionary**
 
-The Reverse Dictionary project aims to build a tool that accepts Arabic descriptions or meanings as input and returns the most relevant matching words. This project serves as a comprehensive way to refresh Machine Learning and Natural Language Processing (NLP) knowledge, moving from classical statistical methods to modern architectures. The Arabic domain was specifically chosen due to its linguistic richness and the unique challenges presented by its underdevelopment in the NLP space.
+The Reverse Dictionary project aims to build a tool that accepts Arabic descriptions or meanings as input and returns the most relevant matching words. This project serves as a comprehensive way to refresh Machine Learning and Natural Language Processing (NLP) knowledge, moving from classical statistical methods to modern architectures. The Arabic domain was specifically chosen for two reasons: its linguistic richness presents unique morphological challenges, and it remains comparatively underserved in the NLP research space.
 
 ## **Solution Overview**
 
@@ -26,8 +26,9 @@ This dataset is derived from three major dictionaries: the "Contemporary Arabic 
     "pos": "n",
     "electra":[0.4, 0.3, …],
     "bertseg":[0.7, 2.9, …],
-    "bertmsa":[0.8, 1.4, …],
+    "bertmsa":[0.8, 1.4, …]
   }
+  ```
 * **Count:**
   - **Train:** 31372
   - **Validation:** 3921
@@ -75,8 +76,15 @@ To maintain the integrity of the evaluation, verification confirmed that no iden
     * **Train:** 40,955 cases.
     * **Validation:** 2,332 cases.
     * **Test:** 2,329 cases.
-* **Word Length Frequency (Training Set):** Analysis of the word length of target words and their frequency:
-    `{1: 56142, 2: 15476, 3: 3638, 4: 807, 5: 153, 6: 36, 7: 8, 8: 3, 9: 1, 13: 1}`
+* **Word Length Frequency (Training Set):** Distribution of target word lengths (in tokens) and their frequency in the training set — the vast majority of targets are single tokens, confirming the task is primarily single-word retrieval:
+
+    | Word Length (tokens) | Frequency |
+    | :---: | :---: |
+    | 1 | 56,142 |
+    | 2 | 15,476 |
+    | 3 | 3,638 |
+    | 4 | 807 |
+    | 5+ | 202 |
 
 ---
 
@@ -112,8 +120,8 @@ With the configuration above, the model achieved the following baseline results:
 
 | Metric | Result |
 | :--- | :--- |
-| **Top-1 Accuracy** | **0.1818** |
-| **Top-5 Accuracy** | **0.2840** |
+| **Top-1 Accuracy** | **18.18%** |
+| **Top-5 Accuracy** | **28.40%** |
 | **MRR (Mean Reciprocal Rank)** | **0.2205** |
 
 ---
@@ -137,14 +145,14 @@ Despite the increased linguistic intelligence, initial scores were lower than th
 
 | Metric | Result |
 | :--- | :--- |
-| **Top-1 Accuracy** | **0.1504** |
-| **Top-5 Accuracy** | **0.2312** |
+| **Top-1 Accuracy** | **15.04%** |
+| **Top-5 Accuracy** | **23.12%** |
 | **MRR (Mean Reciprocal Rank)** | **0.1817** |
 
 ### **Key Technical Insights & Observations**
 * **The "Averaging" Weakness:** Unlike TF-IDF, which automatically rewards rare/important words via the IDF score, simple averaging in FastText treats all words equally. High-frequency words (e.g., "هو", "الذي", "في") pull the final vector toward a "generic" center, reducing the distinctiveness of the definition.
 * This appears to be a common phenomenon in "Reverse Dictionaries" where short definitions are easily diluted by common functional words.
-* The drop in performance compared to TF-IDF ($0.18$ vs $0.15$) suggests that for short, precise dictionary glosses, **keyword importance** is currently more valuable than **broad semantic meaning**. 
+* The drop in performance compared to TF-IDF (0.18 vs 0.15) suggests that for short, precise dictionary glosses, **keyword importance** is currently more valuable than **broad semantic meaning**.
 
 ---
 
@@ -338,14 +346,14 @@ After fine-tuning, models are evaluated via **gloss-to-word retrieval**:
 
 ### **Fine Tuning Results**
 The following shows the fine-tuning loss per epoch for each model:
-| Model | Epoch 1 | Epoch 2 | Epoch 3 | Average Epoch Duration(mins) | 
+| Model | Epoch 1 | Epoch 2 | Epoch 3 | Avg. Epoch Duration |
 | :--- | :---: | :---: | :---: | :---: |
-| **CamelBERT** | 0.3533 | 0.1509 | 0.1039 | 20:31,  1.03s/it |
-| **MARBERTv2** | 1.5419 | 0.1987 | 0.1335 | 19:11  1.03it/s |
-| **MARBERT** | 0.5900 | 0.1966 | 0.1146 | 19:11  1.03it/s |
-| **AraBERT** | 0.7003 | 0.3246 | 0.2607 | 21:36,  2.18s/it |
-| **Arabic-BERT** | 0.4569 | 0.1965 | 0.1187 | 20:59,  1.89it/s |
-| **AraElectra** | 0.7004 | 0.2425 | 0.1658 | 21:17, 1.87it/s |
+| **CamelBERT** | 0.3533 | 0.1509 | 0.1039 | 20:31 (1.03s/it) |
+| **MARBERTv2** | 1.5419 | 0.1987 | 0.1335 | 19:11 (1.03s/it) |
+| **MARBERT** | 0.5900 | 0.1966 | 0.1146 | 19:11 (1.03s/it) |
+| **AraBERT** | 0.7003 | 0.3246 | 0.2607 | 21:36 (2.18s/it) |
+| **Arabic-BERT** | 0.4569 | 0.1965 | 0.1187 | 20:59 (1.89s/it) |
+| **AraElectra** | 0.7004 | 0.2425 | 0.1658 | 21:17 (1.87s/it) |
 
 The following tables summarize the performance of the models after fine-tuning for the task.
 
@@ -377,9 +385,7 @@ The following tables summarize the performance of the models after fine-tuning f
 
 #### **3. Mean Reciprocal Rank (MRR)**
 
-| Model | In-Vocab Accuracy | Overall Accuracy |
-| :--- | :---: | :---: |
-| **CamelBERT** | **0.50** | **0.33** |
+| Model | In-Vocab MRR | Overall MRR |
 | **MARBERTv2** | 0.49 | 0.32 |
 | **MARBERT** | 0.47 | 0.31 |
 | **AraBERT** | 0.46 | 0.30 |
@@ -467,7 +473,7 @@ Beyond traditional metrics, additional measurements were implemented to assess o
 
 #### **3. Retrieval-Augmented Generation (RAG)**
 
-RAG was implemented using **ChromaDB** for vector database management due to its simplicity and suitability for datasets of this size. For embedding generation, **intfloat/multilingual-e5-base** was selected as it supports 100 languages including Arabic and is trained on large corpora. The embeddings, combined with definitions and labels, are stored in ChromaDB with `normalize_embeddings=True` to facilitate cosine similarity search and persisted to disk.
+RAG was implemented using **ChromaDB** for vector database management due to its simplicity and suitability for datasets of this size. For embedding generation, **intfloat/multilingual-e5-base** was selected as it supports 100 languages including Arabic and is trained on large corpora. The embeddings, combined with definitions and labels, are stored in ChromaDB with `normalize_embeddings=True` to facilitate cosine similarity search and persisted to disk, with total entries number of 76265.
 
 During inference, test definitions are embedded using the same embedding model, and the training index retrieves the top 3 candidates (configurable in settings, but 3 was chosen for this experiment). These candidates are added to the prompt as in-context examples following the pattern:
 
@@ -484,21 +490,18 @@ This allows the model to observe the pattern from examples and follow it in its 
 
 | Model | Overall Top1 | Overall Top5 |  Overall MRR |
 | :--- | :---: | :---: | :---: |
-| **Gemma4** | [TBD] | [TBD] | [TBD] |
 | **Qwen3.5** | 10.50% | 16.60% | 0.1310 | 
 
 **Morphological Matching Results:**
 
 | Model | Overall Top1 | Overall Top5 |  Overall MRR |
 | :--- | :---: | :---: | :---: |
-| **Gemma4** | [TBD] | [TBD] | [TBD] |
 | **Qwen3.5** | 26.25% | 50.40% | 0.4163 | 
 
 **Other Metrics**
 
 | Model | Coverage | Repetition Rate |  Average Word Length | Language Consistency
 | :--- | :---: | :---: | :---: | :---: |
-| **Gemma4** | [TBD] | [TBD] | [TBD] | [TBD] |
 | **Qwen3.5** | 100% | 26.30% | 1.36 | 99.62% |
 
 ---
@@ -509,22 +512,25 @@ This allows the model to observe the pattern from examples and follow it in its 
 
 | Model | Overall Top1 | Overall Top5 |  Overall MRR |
 | :--- | :---: | :---: | :---: |
-| **Gemma4** | [TBD] | [TBD] | [TBD] |
-| **Qwen3.5** | [TBD] | [TBD] | [TBD] | 
+| **Qwen3.5** | 25.90% | 33.10% | 0.2890 | 
 
 **Morphological Matching Results:**
 
 | Model | Overall Top1 | Overall Top5 |  Overall MRR |
 | :--- | :---: | :---: | :---: |
-| **Gemma4** | [TBD] | [TBD] | [TBD] |
-| **Qwen3.5** | [TBD] | [TBD] | [TBD] |
+| **Qwen3.5** | 39.82% | 62.60% | 0.5462 |
 
 **Other Metrics**
 
 | Model | Coverage | Repetition Rate |  Average Word Length | Language Consistency
 | :--- | :---: | :---: | :---: | :---: |
-| **Gemma4** | [TBD] | [TBD] | [TBD] | [TBD] |
-| **Qwen3.5** | [TBD] | [TBD] | [TBD] | [TBD] |
+| **Qwen3.5** | 100% | 25.50% | 1.35 | 99.94% |
+
+---
+
+> **Notes:**
+> - Due to time and hardware limitations, the LLM experimentation results are based on a subset of the test data (1,000 samples).
+> - This experiment should have been conducted on Gemma as well. The code and model were ready; however, significant challenges arose in ensuring consistent output formatting for reliable parsing. Multiple approaches were attempted including: modifying the prompt structure, using English-only prompts, separating system/assistant/user prompts, altering the prompt format, disabling reasoning/thinking modes, increasing max token size, and adjusting temperature settings. Despite these efforts, the model consistently generated verbose preambles before the list, exhausting the token budget before producing parseable output.
 
 ---
 
@@ -533,3 +539,41 @@ This allows the model to observe the pattern from examples and follow it in its 
 * **The Reasoning Loop:** A significant challenge was the model’s tendency to "overthink" or generate internal reasoning (CoT) even when instructed not to. This increased token usage and slowed down the inference over the 9k record test set.
 
 * **Data Quality Challenges:** Some of the data and glosses in the dataset are ambiguous or difficult to interpret, even for humans. The model's performance, while not perfect, was not far off considering these inherent ambiguities in the test set.
+
+* **Dataset and Arabic Challenges:** The richness of the Arabic language and inherent ambiguity in some definitions mean that multiple words can legitimately represent a single gloss. Models producing valid alternatives may appear incorrect when evaluated against datasets that contain only one expected answer per definition.
+* **RAG Effectiveness:** The RAG (Retrieval-Augmented Generation) approach significantly improved results and made the generation process more efficient by grounding the model's responses in retrieved context, reducing hallucination and irrelevant outputs.
+
+* **Small Model Limitations:** The results are from small 4B parameter models without reasoning capabilities. The absence of reasoning mechanisms, while reducing token consumption, caused models to generate outputs even when instructed otherwise. Qwen specifically tends to revise responses iteratively until achieving satisfactory quality, consuming substantial tokens in this reasoning phase. This limitation partly accounts for the seemingly modest performance figures.
+
+* **Gemma's Verbosity Challenge:** Gemma exhibited excessive verbosity in its generation outputs, making it exceptionally difficult to parse consistent and reliable structured responses. Despite multiple prompt engineering strategies and configuration adjustments, this behavior persisted and hindered the extraction of clean, formatted results for evaluation. However, this doesn't necessarily indicate that the model is fundamentally flawed, it may be a mismatch between the model's design and this specific task's requirements. The issue could stem from my implementation approach or Gemma's architectural priorities. I plan to explore this further by applying Gemma to other tasks to better understand its capabilities and suitability beyond the reverse dictionary context.
+
+* **Significant Performance Gains Over Traditional Approaches:** Despite being evaluated on a subset of the dataset, LLMs demonstrated substantial performance improvements compared to TF-IDF, static embeddings, and fine-tuned Transformers. The generative capabilities of LLMs and their superior handling of out-of-vocabulary (OOV) words directly addresses a critical weakness of all prior methods.
+
+* **Zero-Shot by Design:** All LLM results presented here use zero-shot inference with no fine-tuning. This makes the performance gains especially notable — they reflect the models' inherent capabilities without any task-specific optimization, suggesting that fine-tuning would yield further improvements.
+
+* **OOV as a Fundamental Advantage:** Unlike retrieval-based approaches which are constrained to a closed vocabulary of training words, LLMs can generate any word regardless of whether it appeared during training. This capability fundamentally changes the nature of the task and represents the most meaningful architectural advancement across all experiments.
+
+
+---
+
+## **TL;DR**
+
+This project builds an Arabic reverse dictionary — given a definition, predict the word. Four approaches were tested in order of increasing sophistication:
+
+| Approach | Best Top-1 (Overall) | Notes |
+| :--- | :---: | :--- |
+| **TF-IDF** | 18.18% | Strong keyword baseline; surprisingly competitive on short glosses |
+| **FastText + FAISS** | 15.04% | Semantic search hurt by mean-pooling diluting rare words |
+| **Transformers (Zero-Shot)** | 14.84% | CamelBERT best out-of-the-box; others needed fine-tuning |
+| **Transformers (Fine-Tuned)** | 27.59% | Contrastive training with NT-Xent loss; CamelBERT leads |
+| **Qwen3.5 Zero-Shot (LLM)** | 26.25%* | Morphological matching; 10.50% raw |
+| **Qwen3.5 + RAG (LLM)** | **39.82%\*** | Morphological matching; best result overall |
+
+*\*Evaluated on 1,000-sample subset due to hardware constraints.*
+
+**Key takeaways:**
+- TF-IDF outperformed static embeddings because keyword importance matters more than broad semantics for short dictionary glosses.
+- Fine-tuning Transformers with contrastive learning roughly doubled zero-shot performance across all models.
+- LLMs with RAG achieved the best results without any fine-tuning, and uniquely handle out-of-vocabulary words that all retrieval-based methods fail on entirely.
+- Arabic morphology makes exact-match evaluation misleading — morphological normalisation revealed Qwen's true performance was ~2.5× higher than raw matching suggested.
+- Gemma 4 was excluded from LLM results due to persistent verbosity issues that prevented reliable structured output parsing.
