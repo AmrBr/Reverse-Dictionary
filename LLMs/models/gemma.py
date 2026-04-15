@@ -14,11 +14,12 @@ class GemmaModel(BaseModel):
         self.model_name = model_name
         print("Gemma ready.")
 
-    def query(self, prompt: str, definition: str) -> str:
+    def query(self, definition: str, examples: str) -> str:
+        system_prompt, user_prompt = self.build_system_and_user_prompts(definition, examples)
         response = self.client.chat.completions.create(
             model=self.model_name,
-            messages=[{"role": "user", "content": prompt}, {"role": "assistant", "content": "1."}],
-            max_tokens=200,
+            messages=[{"role": "user", "content": user_prompt}, {"role": "assistant", "content": "1."}, {"role": "system", "content": system_prompt}],
+            max_tokens=500,
             temperature=0.7,
         )
         return response.choices[0].message.content
