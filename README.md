@@ -386,6 +386,7 @@ The following tables summarize the performance of the models after fine-tuning f
 #### **3. Mean Reciprocal Rank (MRR)**
 
 | Model | In-Vocab MRR | Overall MRR |
+| :--- | :---: | :---: |
 | **MARBERTv2** | 0.49 | 0.32 |
 | **MARBERT** | 0.47 | 0.31 |
 | **AraBERT** | 0.46 | 0.30 |
